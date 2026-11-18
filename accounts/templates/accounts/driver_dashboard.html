@@ -1,9 +1,28 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="card p-4 shadow-sm">
-    <h2>Passenger Dashboard</h2>
-    <p>Welcome, <strong>{{ user.first_name|default:user.username }}</strong>! You are logged in as a <strong>Passenger</strong>.</p>
-    <hr>
-    <p class="text-muted mb-0">View active bus routes, terminal boarding gates, and ticket reservations here.</p>
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2>Driver Boarding & Fare Console</h2>
+            <p class="subtitle">Operator: <strong>{{ user.first_name|default:user.username }}</strong></p>
+        </div>
+        <span class="badge badge-green">{{ user.get_role_display }}</span>
+    </div>
+
+    <div class="feature-grid">
+        <div class="feature-box">
+            <h4>📱 F-06 QR Boarding Scanner</h4>
+            <p>Scan passenger QR tickets for instant <strong>ALLOW BOARDING</strong> or <strong>COLLECT FARE</strong> prompts.</p>
+        </div>
+        <div class="feature-box">
+            <h4>💰 F-07 Exact Cash Collection</h4>
+            <p>Record official door cash payments to mark pending tickets Paid.</p>
+        </div>
+        <div class="feature-box">
+            <h4>🛑 F-05 40-Seat Capacity Rule</h4>
+            <p>Real-time passenger count locked at a strict maximum of 40 seats per bus.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
+
