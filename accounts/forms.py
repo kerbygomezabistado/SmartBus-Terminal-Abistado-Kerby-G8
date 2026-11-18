@@ -9,7 +9,7 @@ class SmartBusRegisterForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'first_name', 'last_name', 'email', 'contact_number', 'role']
+        fields = ['username', 'employee_id', 'first_name', 'last_name', 'email', 'contact_number', 'role']
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:

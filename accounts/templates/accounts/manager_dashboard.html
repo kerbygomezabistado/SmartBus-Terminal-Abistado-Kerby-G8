@@ -1,0 +1,9 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm">
+    <h2>Transit Terminal Management Dashboard</h2>
+    <p>Welcome, <strong>{{ user.first_name|default:user.username }}</strong> ({{ user.get_role_display }})</p>
+    <hr>
+    <p class="text-muted mb-0">F-08 Trip Scheduling • F-09 Route & Fare Management • F-10 Seat Inventory & Revenue Audit • F-12 Staff Accounts</p>
+</div>
+{% endblock %}

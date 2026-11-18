@@ -5,12 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import SmartBusRegisterForm, ProfileUpdateForm
 
+def kiosk_view(request):
+    return render(request, 'accounts/kiosk.html')
+
 def register_view(request):
     if request.method == 'POST':
         form = SmartBusRegisterForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'SmartBus account created! You can now log in.')
+            messages.success(request, 'Staff account created! You can now log in.')
             return redirect('login')
         else:
             messages.error(request, 'Registration failed. Please fix the errors below.')
@@ -24,9 +27,9 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            if user.role == 'admin':
-                return redirect('admin_dashboard')
-            return redirect('passenger_dashboard')
+            if user.role == 'manager':
+                return redirect('manager_dashboard')
+            return redirect('driver_dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
     else:
@@ -39,17 +42,17 @@ def logout_view(request):
     return redirect('login')
 
 @login_required
-def admin_dashboard(request):
-    if request.user.role != 'admin':
-        messages.error(request, 'Access denied: Terminal Admins only.')
-        return redirect('passenger_dashboard')
-    return render(request, 'accounts/admin_dashboard.html')
+def manager_dashboard(request):
+    if request.user.role != 'manager':
+        messages.error(request, 'Access denied: Terminal Managers only.')
+        return redirect('driver_dashboard')
+    return render(request, 'accounts/manager_dashboard.html')
 
 @login_required
-def passenger_dashboard(request):
-    if request.user.role != 'passenger':
-        return redirect('admin_dashboard')
-    return render(request, 'accounts/passenger_dashboard.html')
+def driver_dashboard(request):
+    if request.user.role != 'driver':
+        return redirect('manager_dashboard')
+    return render(request, 'accounts/driver_dashboard.html')
 
 @login_required
 def profile_view(request):

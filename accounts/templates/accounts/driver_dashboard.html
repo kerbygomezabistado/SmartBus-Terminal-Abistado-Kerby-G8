@@ -1,0 +1,9 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm">
+    <h2>Passenger Dashboard</h2>
+    <p>Welcome, <strong>{{ user.first_name|default:user.username }}</strong>! You are logged in as a <strong>Passenger</strong>.</p>
+    <hr>
+    <p class="text-muted mb-0">View active bus routes, terminal boarding gates, and ticket reservations here.</p>
+</div>
+{% endblock %}
