@@ -1,9 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import SmartBusRegisterForm, ProfileUpdateForm
+from .models import CustomUser
 
 def kiosk_view(request):
     return render(request, 'accounts/kiosk.html')
@@ -46,7 +47,40 @@ def manager_dashboard(request):
     if request.user.role != 'manager':
         messages.error(request, 'Access denied: Terminal Managers only.')
         return redirect('driver_dashboard')
-    return render(request, 'accounts/manager_dashboard.html')
+
+    drivers = CustomUser.objects.filter(role='driver').order_by('-is_active', '-is_available', 'first_name')
+    available_count = drivers.filter(is_active=True, is_available=True).count()
+
+    context = {
+        'drivers': drivers,
+        'total_drivers': drivers.count(),
+        'available_count': available_count,
+    }
+    return render(request, 'accounts/manager_dashboard.html', context)
+
+@login_required
+def toggle_driver_availability(request, driver_id):
+    if request.user.role != 'manager':
+        return redirect('driver_dashboard')
+    driver = get_object_or_404(CustomUser, id=driver_id, role='driver')
+    driver.is_available = not driver.is_available
+    driver.save()
+    status_text = 'Available for Dispatch' if driver.is_available else 'Unavailable / On Duty'
+    messages.success(request, f"{driver.get_full_name() or driver.username} is now marked {status_text}.")
+    return redirect('manager_dashboard')
+
+@login_required
+def toggle_driver_active(request, driver_id):
+    if request.user.role != 'manager':
+        return redirect('driver_dashboard')
+    driver = get_object_or_404(CustomUser, id=driver_id, role='driver')
+    driver.is_active = not driver.is_active
+    if not driver.is_active:
+        driver.is_available = False
+    driver.save()
+    state = 'activated' if driver.is_active else 'deactivated (history preserved)'
+    messages.info(request, f"Account for {driver.get_full_name() or driver.username} has been {state}.")
+    return redirect('manager_dashboard')
 
 @login_required
 def driver_dashboard(request):
