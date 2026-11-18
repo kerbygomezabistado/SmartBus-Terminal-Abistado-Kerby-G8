@@ -1,6 +1,6 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="card">
+<div class="card" style="margin-bottom: 1.75rem;">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
             <h2>Transit Terminal Management</h2>
@@ -9,21 +9,79 @@
         <span class="badge badge-blue">{{ user.get_role_display }}</span>
     </div>
 
-    <div class="feature-grid" style="margin-bottom: 2rem;">
+    <div class="feature-grid">
         <div class="feature-box">
-            <h4>🧑‍✈️ Total Registered Drivers</h4>
-            <p style="font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-top: 4px;">{{ total_drivers }}</p>
+            <h4>🎟️ Tickets Issued / Boarded</h4>
+            <p style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-top: 4px;">{{ total_tickets }} Issued • {{ boarded_count }} Boarded</p>
         </div>
         <div class="feature-box" style="border-left: 4px solid #10b981;">
-            <h4>✅ Available for Dispatch</h4>
-            <p style="font-size: 1.6rem; font-weight: 800; color: #065f46; margin-top: 4px;">{{ available_count }}</p>
+            <h4>💰 Official Revenue Audit (F-10)</h4>
+            <p style="font-size: 1.5rem; font-weight: 800; color: #065f46; margin-top: 4px;">₱{{ total_revenue }}</p>
         </div>
         <div class="feature-box">
-            <h4>🛑 Capacity Rule</h4>
-            <p style="font-size: 1.1rem; font-weight: 700; color: #1e40af; margin-top: 8px;">40 Seats / Bus Locked</p>
+            <h4>🧑‍✈️ Drivers Available</h4>
+            <p style="font-size: 1.5rem; font-weight: 800; color: #1e40af; margin-top: 4px;">{{ available_count }} / {{ total_drivers }}</p>
         </div>
     </div>
+</div>
 
+<div class="card" style="margin-bottom: 1.75rem;">
+    <div class="card-header">
+        <h3>Live Recorded Tickets & Driver Boarding Audit (F-10)</h3>
+        <p class="subtitle">Real-time sync of Kiosk tickets and Driver QR boarding scans</p>
+    </div>
+
+    {% if tickets %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                    <th style="padding: 10px;">Ticket Code</th>
+                    <th style="padding: 10px;">Route & Seat</th>
+                    <th style="padding: 10px;">Official Fare</th>
+                    <th style="padding: 10px;">Payment</th>
+                    <th style="padding: 10px;">Boarding Status</th>
+                    <th style="padding: 10px;">Recorded By Driver</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tickets %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px; font-weight: 700;">{{ t.ticket_code }}</td>
+                    <td style="padding: 10px;">{{ t.route_name }} <strong>(Seat #{{ t.seat_number }})</strong></td>
+                    <td style="padding: 10px; font-weight: 600;">₱{{ t.official_fare }}</td>
+                    <td style="padding: 10px;">
+                        {% if t.payment_status == 'Paid' %}
+                            <span class="badge badge-green">Paid ({{ t.get_payment_method_display }})</span>
+                        {% else %}
+                            <span class="badge badge-amber">Pending Cash</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px;">
+                        {% if t.is_boarded %}
+                            <span class="badge badge-blue">Boarded</span>
+                        {% else %}
+                            <span style="color: #64748b;">Not Yet Scanned</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px;">
+                        {% if t.scanned_by %}
+                            <strong>{{ t.scanned_by.get_full_name|default:t.scanned_by.username }}</strong>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert">No tickets recorded yet. Open <strong>Passenger Kiosk</strong> to issue a ticket, then scan it on the <strong>Driver Console</strong>.</div>
+    {% endif %}
+</div>
+
+<div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
         <h3 style="font-size: 1.2rem; color: #0f172a;">Bus Driver Roster & Availability (F-08 / F-12)</h3>
         <a href="{% url 'register' %}" class="btn btn-primary">+ Add New Driver</a>
@@ -89,9 +147,7 @@
         </table>
     </div>
     {% else %}
-    <div class="alert">
-        No Bus Drivers registered yet. Click <strong>+ Add New Driver</strong> to register a driver account.
-    </div>
+    <div class="alert">No Bus Drivers registered yet.</div>
     {% endif %}
 </div>
 {% endblock %}

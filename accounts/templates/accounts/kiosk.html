@@ -1,20 +1,60 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="card p-4 shadow-sm">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>🎟️ SmartBus Self-Service Ticket Kiosk</h2>
-        <span class="badge bg-success fs-6">Walk-Up Mode • No Login Required</span>
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2>🎟️ Walk-Up Self-Service Ticket Kiosk</h2>
+            <p class="subtitle">Anonymous Commuter Terminal • Official Locked Route Fares</p>
+        </div>
+        <span class="badge {% if remaining_seats > 0 %}badge-green{% else %}badge-amber{% endif %}">
+            {{ remaining_seats }} / 40 Seats Open
+        </span>
     </div>
-    <p class="text-muted">
-        <strong>F-01</strong> Live Trip Search & Seat Availability • 
-        <strong>F-02</strong> Locked Official Fare • 
-        <strong>F-03</strong> Hybrid Payment • 
-        <strong>F-04</strong> QR Ticket • 
-        <strong>F-05</strong> 40-Seat Capacity Limit
-    </p>
-    <hr>
-    <div class="alert alert-info mb-0">
-        <strong>Anonymous Commuter Kiosk:</strong> Select an upcoming trip, choose an open seat (out of 40), and pay online or in cash at boarding—no passenger account needed.
+
+    {% if generated_ticket %}
+    <div style="background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center;">
+        <span class="badge badge-green" style="margin-bottom: 8px;">F-04 Official QR Ticket Receipt</span>
+        <h2 style="font-size: 2rem; letter-spacing: 2px; color: #0f172a; margin: 6px 0;">{{ generated_ticket.ticket_code }}</h2>
+        <p style="font-size: 0.95rem; color: #334155;">
+            <strong>Route:</strong> {{ generated_ticket.route_name }} • <strong>Seat #{{ generated_ticket.seat_number }}</strong><br>
+            <strong>Official Fare:</strong> ₱{{ generated_ticket.official_fare }} ({{ generated_ticket.get_payment_method_display }} — <strong>{{ generated_ticket.payment_status }}</strong>)
+        </p>
+        <p style="font-size: 0.82rem; color: #64748b; margin-top: 8px;">Present this ticket code to the Bus Driver at boarding.</p>
     </div>
+    {% endif %}
+
+    {% if remaining_seats > 0 %}
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            <label>Select Destination Route (F-01 / F-02 Locked Fare)</label>
+            <select name="route_name" required>
+                {% for route, fare in routes.items %}
+                    <option value="{{ route }}">{{ route }} — ₱{{ fare }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label>Choose Available Seat (1–40)</label>
+            <select name="seat_number" required>
+                {% for seat in available_seats %}
+                    <option value="{{ seat }}">Seat #{{ seat }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <label>Hybrid Payment Option (F-03)</label>
+            <select name="payment_method" required>
+                <option value="online">Pay Now (Online Prepaid — Marked Paid)</option>
+                <option value="cash">Pay Exact Cash to Driver at Boarding</option>
+            </select>
+        </p>
+        <button type="submit" class="btn btn-kiosk w-100">Issue Official QR Ticket</button>
+    </form>
+    {% else %}
+    <div class="alert alert-danger">
+        <strong>F-05 Capacity Freeze:</strong> All 40 seats on this bus are currently booked. Ticket sales are frozen.
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

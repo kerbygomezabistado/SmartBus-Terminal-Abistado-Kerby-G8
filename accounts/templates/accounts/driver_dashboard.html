@@ -4,25 +4,73 @@
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
             <h2>Driver Boarding & Fare Console</h2>
-            <p class="subtitle">Operator: <strong>{{ user.first_name|default:user.username }}</strong></p>
+            <p class="subtitle">Operator: <strong>{{ user.first_name|default:user.username }}</strong> • Live Capacity: <strong>{{ boarded_total }} / 40 Boarded</strong></p>
         </div>
         <span class="badge badge-green">{{ user.get_role_display }}</span>
     </div>
 
-    <div class="feature-grid">
-        <div class="feature-box">
-            <h4>📱 F-06 QR Boarding Scanner</h4>
-            <p>Scan passenger QR tickets for instant <strong>ALLOW BOARDING</strong> or <strong>COLLECT FARE</strong> prompts.</p>
-        </div>
-        <div class="feature-box">
-            <h4>💰 F-07 Exact Cash Collection</h4>
-            <p>Record official door cash payments to mark pending tickets Paid.</p>
-        </div>
-        <div class="feature-box">
-            <h4>🛑 F-05 40-Seat Capacity Rule</h4>
-            <p>Real-time passenger count locked at a strict maximum of 40 seats per bus.</p>
-        </div>
+    {% if scan_result %}
+        {% if scan_result.status == 'allow' %}
+            <div style="background: #dcfce7; border-left: 6px solid #16a34a; color: #14532d; padding: 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.25rem;">✅ {{ scan_result.message }}</h3>
+                <p style="font-size: 0.9rem; margin-top: 4px;">Ticket <strong>{{ scan_result.ticket.ticket_code }}</strong> • {{ scan_result.ticket.route_name }} • Status: <strong>PAID & RECORDED</strong></p>
+            </div>
+        {% elif scan_result.status == 'collect' %}
+            <div style="background: #fef3c7; border-left: 6px solid #d97706; color: #78350f; padding: 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.25rem;">💵 {{ scan_result.message }}</h3>
+                <p style="font-size: 0.9rem; margin: 6px 0 12px;">Ticket <strong>{{ scan_result.ticket.ticket_code }}</strong> (Seat #{{ scan_result.ticket.seat_number }}) is a Cash-at-Door ticket.</p>
+                <form method="POST" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_code" value="{{ scan_result.ticket.ticket_code }}">
+                    <input type="hidden" name="action" value="confirm_cash">
+                    <button type="submit" class="btn btn-success">Confirm ₱{{ scan_result.ticket.official_fare }} Collected & Allow Boarding</button>
+                </form>
+            </div>
+        {% else %}
+            <div style="background: #fee2e2; border-left: 6px solid #dc2626; color: #7f1d1d; padding: 1.25rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.15rem;">⛔ {{ scan_result.message }}</h3>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <form method="POST" style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1.75rem;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="scan">
+        <p style="margin-bottom: 0.75rem;">
+            <label>Scan or Enter Passenger QR Ticket Code (F-06 / F-07)</label>
+            <input type="text" name="ticket_code" placeholder="e.g. SBT-A1B2C3" required style="text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+        </p>
+        <button type="submit" class="btn btn-primary w-100">Verify QR Ticket & Record Boarding</button>
+    </form>
+
+    <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: #0f172a;">My Recorded Boarding Scans</h3>
+    {% if recent_scans %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                    <th style="padding: 10px;">Ticket Code</th>
+                    <th style="padding: 10px;">Seat</th>
+                    <th style="padding: 10px;">Route</th>
+                    <th style="padding: 10px;">Fare</th>
+                    <th style="padding: 10px;">Payment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in recent_scans %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px; font-weight: 700;">{{ t.ticket_code }}</td>
+                    <td style="padding: 10px;">#{{ t.seat_number }}</td>
+                    <td style="padding: 10px;">{{ t.route_name }}</td>
+                    <td style="padding: 10px;">₱{{ t.official_fare }}</td>
+                    <td style="padding: 10px;"><span class="badge badge-green">{{ t.payment_status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <p class="subtitle">No tickets scanned yet. Generate a ticket on the <strong>Passenger Kiosk</strong> tab and scan its code here.</p>
+    {% endif %}
 </div>
 {% endblock %}
-
